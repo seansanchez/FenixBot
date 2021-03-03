@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Fenix.Worker.DiscordListener": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "local",
+        "KeyVaultName": "dev-fenix-usw"
+      }
+    }
+  }
+}

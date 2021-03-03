@@ -1,0 +1,106 @@
+﻿using Discord;
+using Discord.Rest;
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Schema;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Fenix.Discord
+{
+    public class DiscordAdapter : BotAdapter
+    {
+        private readonly IOptions<DiscordSettings> _discordSettings;
+        private readonly DiscordRestClient _discordRestClient;
+        private readonly ILogger<DiscordAdapter> _logger;
+
+        public DiscordAdapter(
+            IOptions<DiscordSettings> discordSettings,
+            ILogger<DiscordAdapter> logger)
+        {
+            _discordSettings = discordSettings ?? throw new ArgumentNullException(nameof(discordSettings));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _discordRestClient = new DiscordRestClient();
+        }
+
+        public override async Task<ResourceResponse[]> SendActivitiesAsync(
+            ITurnContext turnContext,
+            Activity[] activities,
+            CancellationToken cancellationToken)
+        {
+            if (_discordRestClient.LoginState != LoginState.LoggedIn)
+            {
+                await _discordRestClient
+                    .LoginAsync(TokenType.Bot, _discordSettings.Value.BotToken)
+                    .ConfigureAwait(false);
+            }
+
+            var resourceResponses = new List<ResourceResponse>();
+
+            foreach (var activity in activities)
+            {
+                IMessageChannel channel;
+
+                if (activity.Conversation.IsGroup.GetValueOrDefault())
+                {
+                    channel = await _discordRestClient
+                        .GetGroupChannelAsync(Convert.ToUInt64(activity.ChannelId))
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    channel = await _discordRestClient
+                        .GetDMChannelAsync(Convert.ToUInt64(activity.ChannelId))
+                        .ConfigureAwait(false);
+                }
+                
+                var message = await channel.SendMessageAsync(activity.Text).ConfigureAwait(false);
+
+                resourceResponses.Add(new ResourceResponse($"{message.Id}"));
+            }
+
+            return resourceResponses.ToArray();
+        }
+
+        public override Task<ResourceResponse> UpdateActivityAsync(
+            ITurnContext turnContext,
+            Activity activity,
+            CancellationToken cancellationToken)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override Task DeleteActivityAsync(
+            ITurnContext turnContext,
+            ConversationReference reference,
+            CancellationToken cancellationToken)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override async Task<InvokeResponse> ProcessActivityAsync(
+            ClaimsIdentity claimsIdentity,
+            Activity activity,
+            BotCallbackHandler callback,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var context = new TurnContext(this, activity))
+                {
+                    await RunPipelineAsync(context, callback, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+
+            return new InvokeResponse();
+        }
+    }
+}
