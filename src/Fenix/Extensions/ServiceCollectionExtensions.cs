@@ -1,18 +1,18 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Fenix.Core.Extensions
+namespace Fenix.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static void AddDiscordSettings(this IServiceCollection source, string section = null)
+        public static void AddAzureStorageOptions(this IServiceCollection source, string section = null)
         {
             if (section == null)
             {
-                section = "AzureStorageSettings";
+                section = "AzureStorageOptions";
             }
 
-            source.AddOptions<AzureStorageSettings>()
+            source.AddOptions<AzureStorageOptions>()
                 .Configure<IConfiguration>((settings, configuration) =>
                 {
                     configuration.GetSection(section).Bind(settings);

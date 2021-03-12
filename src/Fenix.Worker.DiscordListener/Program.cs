@@ -1,8 +1,7 @@
-using Fenix.Core.Extensions;
 using Fenix.Discord.Extensions;
 using Fenix.Discord.Persistence;
-using Fenix.Discord.Persistence.Interfaces;
-using Fenix.Worker.DiscordListener.Services.Interfaces;
+using Fenix.Extensions;
+using Fenix.Worker.DiscordListener.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -24,15 +23,17 @@ namespace Fenix.Worker.DiscordListener
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddLogging();
-                    services.AddAzureStorageSettings();
-                    services.AddDiscordSettings();
-                    services.AddAutoMapper(x =>
-                    {
-                        x.AddBotProfile();
-                        x.AddDiscordProfile();
-                    }, typeof(Program));
+                    services.AddAzureStorageOptions();
+                    services.AddDiscordOptions();
+                    services.AddAutoMapper(
+                        x =>
+                        {
+                            x.AddBotProfile();
+                            x.AddDiscordProfile();
+                        },
+                        typeof(Program));
                     services.AddScoped<IDiscordActivityQueue, DiscordActivityQueue>();
-                    services.AddScoped<IDiscordListener, Services.DiscordListener>();
+                    services.AddScoped<IDiscordService, DiscordService>();
                     services.AddHostedService<Worker>();
                 });
     }

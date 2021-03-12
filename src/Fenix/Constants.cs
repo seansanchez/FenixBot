@@ -1,4 +1,4 @@
-﻿namespace Fenix.Core
+﻿namespace Fenix
 {
     public static class Constants
     {

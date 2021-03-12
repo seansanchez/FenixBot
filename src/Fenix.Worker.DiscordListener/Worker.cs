@@ -1,30 +1,30 @@
-using Fenix.Worker.DiscordListener.Services.Interfaces;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Fenix.Worker.DiscordListener.Services;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Fenix.Worker.DiscordListener
 {
     public class Worker : BackgroundService
     {
-        private readonly IDiscordListener _discordListener;
+        private readonly IDiscordService _discordService;
         private readonly ILogger<Worker> _logger;
 
-        public Worker(IDiscordListener discordListener, ILogger<Worker> logger)
+        public Worker(IDiscordService discordListener, ILogger<Worker> logger)
         {
-            _discordListener = discordListener ?? throw new ArgumentNullException(nameof(discordListener));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._discordService = discordListener ?? throw new ArgumentNullException(nameof(discordListener));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _discordListener.InitializeAsync();
+            await this._discordService.InitializeAsync().ConfigureAwait(false);
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                this._logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 await Task.Delay(1000, stoppingToken);
             }
         }

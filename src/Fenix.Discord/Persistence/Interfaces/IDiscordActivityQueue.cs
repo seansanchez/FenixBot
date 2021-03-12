@@ -1,8 +1,8 @@
-﻿using Microsoft.Bot.Schema;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Bot.Schema;
 
-namespace Fenix.Discord.Persistence.Interfaces
+namespace Fenix.Discord.Persistence
 {
     public interface IDiscordActivityQueue
     {

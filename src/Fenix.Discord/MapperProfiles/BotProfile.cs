@@ -10,11 +10,11 @@ namespace Fenix.Discord.MapperProfiles
     {
         public BotProfile()
         {
-            CreateMap<SocketMessage, IActivity>()
+            this.CreateMap<SocketMessage, IActivity>()
                 .ConvertUsing(x => ToActivity(x));
         }
 
-        private IActivity ToActivity(SocketMessage source)
+        private static IActivity ToActivity(SocketMessage source)
         {
             var activity = new Activity()
             {

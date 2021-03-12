@@ -1,6 +1,6 @@
-﻿namespace Fenix.Core
+﻿namespace Fenix
 {
-    public class AzureStorageSettings
+    public class AzureStorageOptions
     {
         public string ConnectionString { get; set; }
     }

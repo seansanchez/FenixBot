@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ResourceName": {
+      "type": "string"
+    },
+    "Environment": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "ResourceNameWithoutHyphens": "[replace(parameters('ResourceName'), '-', '')]"
+  },
+  "resources": [
+    {
+      "type": "microsoft.operationalinsights/workspaces",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "pergb2018"
+        },
+        "retentionInDays": 30,
+        "workspaceCapping": {
+          "dailyQuotaGb": -1
+        },
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('microsoft.operationalinsights/workspaces', parameters('ResourceName'))]"
+      ],
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "RetentionInDays": 90,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled",
+        "WorkspaceResourceId": "[resourceId('microsoft.operationalinsights/workspaces', parameters('ResourceName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[variables('ResourceNameWithoutHyphens')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "reserved": true
+      },
+      "kind": "linux"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('ResourceNameWithoutHyphens'))]"
+      ],
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "enabled": true,
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('ResourceName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2018-11-01",
+      "name": "[concat(parameters('ResourceName'), '/appsettings')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('ResourceName'))]"
+      ],
+      "properties": {
+        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('ResourceNameWithoutHyphens'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('ResourceNameWithoutHyphens')),'2015-05-01-preview').key1)]",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', parameters('ResourceName')), '2015-05-01').InstrumentationKey]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', parameters('ResourceName')), '2015-05-01').ConnectionString]",
+        "FIDES_ENVIRONMENT": "[parameters('Environment')]",
+        "FUNCTIONS_EXTENSION_VERSION": "~3",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+        "KeyVaultUri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('ResourceName')), '2018-02-14').vaultUri]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('ResourceName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Premium"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('ResourceName')), '2019-08-01', 'Full').identity.principalId]",
+            "permissions": {
+              "keys": [],
+              "secrets": [
+                "Get",
+                "List"
+              ],
+              "certificates": []
+            }
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enableSoftDelete": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(parameters('ResourceName'), '/AzureStorageOptions--ConnectionString')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('ResourceNameWithoutHyphens'))]"
+      ],
+      "properties": {
+        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('ResourceNameWithoutHyphens'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('ResourceNameWithoutHyphens')),'2015-05-01-preview').key1)]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

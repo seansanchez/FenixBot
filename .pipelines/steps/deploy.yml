@@ -1,0 +1,40 @@
+parameters:
+  - name: functionAppName
+    type: string
+  - name: armDeploymentSubscription
+    type: string
+  - name: armDeploymentResourceGroup
+    type: string
+  - name: armDeploymentLocation
+    type: string
+  - name: armDeploymentParametersFileName
+    type: string
+
+steps:
+  - download: current
+    displayName: 'Download - Function App'
+    artifact: 'drop'
+
+  - download: current
+    displayName: 'Download - ArmTemplates'
+    artifact: 'ArmTemplates'
+
+  - task: AzureResourceGroupDeployment@2
+    displayName: 'ARM Template Deployment'
+    inputs:
+      azureSubscription: '${{ parameters.armDeploymentSubscription }}'
+      resourceGroupName: '${{ parameters.armDeploymentResourceGroup }}'
+      location: '${{ parameters.armDeploymentLocation }}'
+      csmFile: '$(Pipeline.Workspace)/ArmTemplates/templates/deployment-template.json'
+      csmParametersFile: '$(Pipeline.Workspace)/ArmTemplates/parameters/${{ parameters.armDeploymentParametersFileName }}.json'
+      deploymentMode: 'Incremental'
+      deploymentOutputs: 'ArmOutput'
+
+  - task: AzureFunctionApp@1
+    displayName: Azure Function App Deployment
+    inputs:
+      azureSubscription: '${{ parameters.armDeploymentSubscription }}'
+      appType: webAppLinux
+      appName: '${{ parameters.functionAppName }}'
+      resourceGroupName: '${{ parameters.armDeploymentResourceGroup }}'
+      package: $(Pipeline.Workspace)/drop/Fenix.Bot.zip

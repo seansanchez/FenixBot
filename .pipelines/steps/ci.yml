@@ -1,0 +1,54 @@
+parameters:
+  - name: configuration
+    type: string
+  - name: projects
+    type: object
+
+steps:
+  - checkout: self
+    submodules: recursive
+
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core 3.1 (latest)'
+    inputs:
+      version: 3.1.x
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet restore'
+    inputs:
+      command: restore
+      projects: '**/*.sln'
+      feedsToUse: 'select'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build'
+    inputs:
+      projects: '**/*.sln'
+      arguments: '--configuration ${{ parameters.configuration }} --no-incremental --no-restore'
+
+  - ${{ each project in parameters.projects }}:
+
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet publish - ${{ project }}'
+      inputs:
+        command: publish
+        projects: '$(Build.SourcesDirectory)/src/${{ project }}/*.csproj'
+        arguments: '--configuration ${{ parameters.configuration }} --output output/${{ project }} --no-restore'
+        publishWebProjects: false
+        modifyOutputPath: false
+        zipAfterPublish: false
+  
+    - task: ArchiveFiles@2
+      displayName: "Archive files"
+      inputs:
+        rootFolderOrFile: output/${{ project }}
+        includeRootFolder: false
+        archiveFile: "$(System.ArtifactsDirectory)/output/${{ project }}.zip"
+
+    - publish: '$(System.ArtifactsDirectory)/output/${{ project }}.zip'
+      displayName: 'Publish - Function App'
+      artifact: 'drop'
+
+  - publish: '$(Build.SourcesDirectory)/.pipelines/arm'
+    displayName: 'Publish - ArmTemplates'
+    artifact: 'ArmTemplates'

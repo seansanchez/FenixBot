@@ -1,8 +1,8 @@
-﻿using Azure.Identity;
+﻿using System;
+using Azure.Identity;
 using Microsoft.Extensions.Configuration;
-using System;
 
-namespace Fenix.Core.Extensions
+namespace Fenix.Extensions
 {
     public static class ConfigurationBuilderExtensions
     {
@@ -18,9 +18,7 @@ namespace Fenix.Core.Extensions
 
         private static void AddSecrets(this IConfigurationBuilder source)
         {
-            var keyVaultName = Environment.GetEnvironmentVariable("KeyVaultName");
-
-            var keyVaultUri = $"https://{keyVaultName}.vault.azure.net/";
+            var keyVaultUri = Environment.GetEnvironmentVariable("KeyVaultUri");
 
             if (string.Equals(GetEnvironment(), "local"))
             {

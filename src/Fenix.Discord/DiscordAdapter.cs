@@ -1,30 +1,30 @@
-﻿using Discord;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using Discord;
 using Discord.Rest;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Fenix.Discord
 {
     public class DiscordAdapter : BotAdapter
     {
-        private readonly IOptions<DiscordSettings> _discordSettings;
+        private readonly IOptions<DiscordOptions> _discordOptions;
         private readonly DiscordRestClient _discordRestClient;
         private readonly ILogger<DiscordAdapter> _logger;
 
         public DiscordAdapter(
-            IOptions<DiscordSettings> discordSettings,
+            IOptions<DiscordOptions> discordOptions,
             ILogger<DiscordAdapter> logger)
         {
-            _discordSettings = discordSettings ?? throw new ArgumentNullException(nameof(discordSettings));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _discordRestClient = new DiscordRestClient();
+            this._discordOptions = discordOptions ?? throw new ArgumentNullException(nameof(discordOptions));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._discordRestClient = new DiscordRestClient();
         }
 
         public override async Task<ResourceResponse[]> SendActivitiesAsync(
@@ -32,10 +32,10 @@ namespace Fenix.Discord
             Activity[] activities,
             CancellationToken cancellationToken)
         {
-            if (_discordRestClient.LoginState != LoginState.LoggedIn)
+            if (this._discordRestClient.LoginState != LoginState.LoggedIn)
             {
-                await _discordRestClient
-                    .LoginAsync(TokenType.Bot, _discordSettings.Value.BotToken)
+                await this._discordRestClient
+                    .LoginAsync(TokenType.Bot, this._discordOptions.Value.BotToken)
                     .ConfigureAwait(false);
             }
 
@@ -47,17 +47,17 @@ namespace Fenix.Discord
 
                 if (activity.Conversation.IsGroup.GetValueOrDefault())
                 {
-                    channel = await _discordRestClient
+                    channel = await this._discordRestClient
                         .GetGroupChannelAsync(Convert.ToUInt64(activity.ChannelId))
                         .ConfigureAwait(false);
                 }
                 else
                 {
-                    channel = await _discordRestClient
+                    channel = await this._discordRestClient
                         .GetDMChannelAsync(Convert.ToUInt64(activity.ChannelId))
                         .ConfigureAwait(false);
                 }
-                
+
                 var message = await channel.SendMessageAsync(activity.Text).ConfigureAwait(false);
 
                 resourceResponses.Add(new ResourceResponse($"{message.Id}"));
@@ -88,16 +88,9 @@ namespace Fenix.Discord
             BotCallbackHandler callback,
             CancellationToken cancellationToken)
         {
-            try
+            using (var context = new TurnContext(this, activity))
             {
-                using (var context = new TurnContext(this, activity))
-                {
-                    await RunPipelineAsync(context, callback, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            catch (Exception e)
-            {
-                throw;
+                await this.RunPipelineAsync(context, callback, cancellationToken).ConfigureAwait(false);
             }
 
             return new InvokeResponse();

@@ -1,12 +1,10 @@
-﻿using Azure.Storage.Queues;
-using Fenix.Core;
-using Fenix.Discord.Persistence.Interfaces;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Queues;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Fenix.Discord.Persistence
 {
@@ -14,18 +12,18 @@ namespace Fenix.Discord.Persistence
     {
         public const string QueueName = "discord-activity-queue";
 
-        private readonly IOptions<AzureStorageSettings> _options;
+        private readonly IOptions<AzureStorageOptions> _options;
 
-        public DiscordActivityQueue(IOptions<AzureStorageSettings> options)
+        public DiscordActivityQueue(IOptions<AzureStorageOptions> options)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            this._options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public async Task SendMessageAsync(IActivity activity, CancellationToken cancellationToken)
         {
             try
             {
-                var queueClient = await GetQueueClientAsync().ConfigureAwait(false);
+                var queueClient = await this.GetQueueClientAsync().ConfigureAwait(false);
 
                 await queueClient.SendMessageAsync(JsonConvert.SerializeObject(activity), cancellationToken).ConfigureAwait(false);
             }
@@ -37,7 +35,7 @@ namespace Fenix.Discord.Persistence
 
         private async Task<QueueClient> GetQueueClientAsync()
         {
-            var queueClient = new QueueClient(_options.Value.ConnectionString, QueueName, new QueueClientOptions()
+            var queueClient = new QueueClient(this._options.Value.ConnectionString, QueueName, new QueueClientOptions()
             {
                 MessageEncoding = QueueMessageEncoding.Base64
             });

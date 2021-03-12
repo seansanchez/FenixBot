@@ -1,6 +1,6 @@
 ﻿namespace Fenix.Discord
 {
-    public class DiscordSettings
+    public class DiscordOptions
     {
         public string BotToken { get; set; }
     }

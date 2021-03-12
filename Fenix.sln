@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31005.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fenix.Bot", "src\Fenix.Bot\Fenix.Bot.csproj", "{1CD35324-EB9E-4747-833F-5045EEED19E5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{3FF933CE-5E22-4758-B2F6-BE8CCEF48324}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fenix.Discord", "src\Fenix.Discord\Fenix.Discord.csproj", "{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fenix.Worker.DiscordListener", "src\Fenix.Worker.DiscordListener\Fenix.Worker.DiscordListener.csproj", "{DCD4114D-885E-40C3-A447-3D53D928DFBC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fenix", "src\Fenix\Fenix.csproj", "{033752AB-94BF-4718-9745-897A5FCAA32C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1CD35324-EB9E-4747-833F-5045EEED19E5}.Debug|x64.ActiveCfg = Debug|x64
+		{1CD35324-EB9E-4747-833F-5045EEED19E5}.Debug|x64.Build.0 = Debug|x64
+		{1CD35324-EB9E-4747-833F-5045EEED19E5}.Release|x64.ActiveCfg = Release|x64
+		{1CD35324-EB9E-4747-833F-5045EEED19E5}.Release|x64.Build.0 = Release|x64
+		{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF}.Debug|x64.ActiveCfg = Debug|x64
+		{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF}.Debug|x64.Build.0 = Debug|x64
+		{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF}.Release|x64.ActiveCfg = Release|x64
+		{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF}.Release|x64.Build.0 = Release|x64
+		{DCD4114D-885E-40C3-A447-3D53D928DFBC}.Debug|x64.ActiveCfg = Debug|x64
+		{DCD4114D-885E-40C3-A447-3D53D928DFBC}.Debug|x64.Build.0 = Debug|x64
+		{DCD4114D-885E-40C3-A447-3D53D928DFBC}.Release|x64.ActiveCfg = Release|x64
+		{DCD4114D-885E-40C3-A447-3D53D928DFBC}.Release|x64.Build.0 = Release|x64
+		{033752AB-94BF-4718-9745-897A5FCAA32C}.Debug|x64.ActiveCfg = Debug|x64
+		{033752AB-94BF-4718-9745-897A5FCAA32C}.Debug|x64.Build.0 = Debug|x64
+		{033752AB-94BF-4718-9745-897A5FCAA32C}.Release|x64.ActiveCfg = Release|x64
+		{033752AB-94BF-4718-9745-897A5FCAA32C}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{74CB6A86-83BF-4777-9F7D-2A45DE3CDFAF} = {3FF933CE-5E22-4758-B2F6-BE8CCEF48324}
+		{033752AB-94BF-4718-9745-897A5FCAA32C} = {3FF933CE-5E22-4758-B2F6-BE8CCEF48324}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {35382D5F-AD48-4DDD-9998-E371019A3B6D}
+	EndGlobalSection
+EndGlobal

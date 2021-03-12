@@ -1,12 +1,13 @@
 ﻿using Fenix.Bot.Bots;
-using Fenix.Core.Extensions;
 using Fenix.Discord;
 using Fenix.Discord.Extensions;
+using Fenix.Extensions;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Bot.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 [assembly: FunctionsStartup(typeof(Fenix.Bot.Startup))]
+
 namespace Fenix.Bot
 {
     public class Startup : FunctionsStartup
@@ -15,8 +16,8 @@ namespace Fenix.Bot
         {
             builder.Services.AddTransient<IBot, EchoBot>();
 
-            builder.Services.AddAzureStorageSettings();
-            builder.Services.AddDiscordSettings();
+            builder.Services.AddAzureStorageOptions();
+            builder.Services.AddDiscordOptions();
             builder.Services.AddSingleton<DiscordAdapter>();
         }
 
