@@ -1,0 +1,38 @@
+parameters:
+  - name: containerNames
+    type: object
+  - name: containerRegistry
+    type: string
+  - name: environment
+    type: string
+
+jobs:
+  - ${{ each containerName in parameters.containerNames }}:
+    - deployment: Container_Image_${{ replace(containerName, '.', '') }}
+      displayName: Container Image - ${{ containerName }}
+      environment: ${{ parameters.environment }}
+
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - download: current
+                displayName: 'Download - Containers'
+                artifact: 'Containers'
+
+              - script: |
+                  unzip app.zip
+                  rm app.zip -f
+                displayName: 'Extract App Files'
+                workingDirectory: '$(Pipeline.Workspace)/Containers/${{ containerName }}/app'
+                failOnStderr: true
+
+              - task: Docker@2
+                displayName: 'Build and push image'
+                inputs:
+                  command: buildAndPush
+                  containerRegistry: ${{ parameters.containerRegistry }}
+                  repository: '${{ containerName }}'
+                  Dockerfile: '$(Pipeline.Workspace)/Containers/${{ containerName }}/Dockerfile'
+                  tags: $(Build.BuildId)
+                  addPipelineData: true

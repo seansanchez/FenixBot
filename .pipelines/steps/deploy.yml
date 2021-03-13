@@ -27,6 +27,7 @@ steps:
       location: '${{ parameters.armDeploymentLocation }}'
       csmFile: '$(Pipeline.Workspace)/ArmTemplates/templates/deployment-template.json'
       csmParametersFile: '$(Pipeline.Workspace)/ArmTemplates/parameters/${{ parameters.armDeploymentParametersFileName }}.json'
+      overrideParameters: '-BuildId $(Build.BuildId) -AcrPassword $(fenixpipelineacrpassword)'
       deploymentMode: 'Incremental'
       deploymentOutputs: 'ArmOutput'
 

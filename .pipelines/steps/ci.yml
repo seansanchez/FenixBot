@@ -1,6 +1,8 @@
 parameters:
   - name: configuration
     type: string
+  - name: containerNames
+    type: object
   - name: projects
     type: object
 
@@ -48,6 +50,31 @@ steps:
     - publish: '$(System.ArtifactsDirectory)/output/${{ project }}.zip'
       displayName: 'Publish - Function App'
       artifact: 'drop'
+
+  - ${{ each containerName in parameters.containerNames }}:
+  
+    - task: CopyFiles@2
+      displayName: 'Copy Dockerfile - ${{ containerName }}'
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)/src/${{ containerName }}'
+        Contents: Dockerfile
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/Containers/${{ containerName }}'
+        CleanTargetFolder: true
+        OverWrite: true
+        flattenFolders: true
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet publish - ${{ containerName }}'
+      inputs:
+        command: publish
+        projects: '$(Build.SourcesDirectory)/src/${{ containerName }}/*.csproj'
+        arguments: '--configuration ${{ parameters.configuration }} --output $(Build.ArtifactStagingDirectory)/Containers/${{ containerName }}/app --no-restore'
+        publishWebProjects: false
+        modifyOutputPath: false
+
+  - publish: '$(Build.ArtifactStagingDirectory)/Containers'
+    displayName: 'Publish - Containers'
+    artifact: 'Containers'
 
   - publish: '$(Build.SourcesDirectory)/.pipelines/arm'
     displayName: 'Publish - ArmTemplates'

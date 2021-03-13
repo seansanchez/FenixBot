@@ -1,7 +1,7 @@
 {
   "profiles": {
-    "Fenix.Worker.DiscordListener": {
-      "commandName": "Project",
+    "Docker": {
+      "commandName": "Docker",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "local",
         "KeyVaultUri": "https://fenix-dev-usw.vault.azure.net"

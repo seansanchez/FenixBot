@@ -7,6 +7,12 @@
     },
     "Environment": {
       "value": "dev"
+    },
+    "BuildId": {
+      "value": ""
+    },
+    "AcrPassword": {
+      "value": ""
     }
   }
 }

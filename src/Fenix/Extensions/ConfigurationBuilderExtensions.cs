@@ -20,14 +20,7 @@ namespace Fenix.Extensions
         {
             var keyVaultUri = Environment.GetEnvironmentVariable("KeyVaultUri");
 
-            if (string.Equals(GetEnvironment(), "local"))
-            {
-                source.AddAzureKeyVault(new Uri(keyVaultUri), new AzureCliCredential());
-            }
-            else
-            {
-                source.AddAzureKeyVault(new Uri(keyVaultUri), new ManagedIdentityCredential());
-            }
+            source.AddAzureKeyVault(new Uri(keyVaultUri), new ManagedIdentityCredential());
         }
 
         private static string GetEnvironment()

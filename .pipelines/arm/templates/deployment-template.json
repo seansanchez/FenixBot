@@ -7,10 +7,19 @@
     },
     "Environment": {
       "type": "string"
+    },
+    "BuildId": {
+      "type": "string"
+    },
+    "AcrPassword": {
+      "type": "string"
     }
   },
   "variables": {
-    "ResourceNameWithoutHyphens": "[replace(parameters('ResourceName'), '-', '')]"
+    "AcrName": "fenixpipeline",
+    "DiscordListenerContainerName": "discordlistener",
+    "ResourceNameWithoutHyphens": "[replace(parameters('ResourceName'), '-', '')]",
+    "AzureContainerRegistry": "[concat(variables('AcrName'), '.azurecr.io')]"
   },
   "resources": [
     {
@@ -83,6 +92,49 @@
       }
     },
     {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('ResourceName')]",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "sku": "Standard",
+        "containers": [
+          {
+            "name": "[variables('DiscordListenerContainerName')]",
+            "properties": {
+              "image": "[concat(variables('AzureContainerRegistry'), '/fenix.worker.', variables('DiscordListenerContainerName'), ':', parameters('BuildId'))]",
+              "ports": [],
+              "environmentVariables": [
+                {
+                  "name": "KeyVaultUri",
+                  "value": "[concat('https://', parameters('ResourceName'), '.vault.azure.net')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "memoryInGB": 1.5,
+                  "cpu": 1
+                }
+              }
+            }
+          }
+        ],
+        "initContainers": [],
+        "imageRegistryCredentials": [
+          {
+            "server": "[variables('AzureContainerRegistry')]",
+            "username": "[variables('AcrName')]",
+            "password": "[parameters('AcrPassword')]"
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux"
+      }
+    },
+    {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2018-02-01",
       "name": "[parameters('ResourceName')]",
@@ -128,7 +180,6 @@
         "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('ResourceNameWithoutHyphens'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('ResourceNameWithoutHyphens')),'2015-05-01-preview').key1)]",
         "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', parameters('ResourceName')), '2015-05-01').InstrumentationKey]",
         "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', parameters('ResourceName')), '2015-05-01').ConnectionString]",
-        "FIDES_ENVIRONMENT": "[parameters('Environment')]",
         "FUNCTIONS_EXTENSION_VERSION": "~3",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
         "KeyVaultUri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('ResourceName')), '2018-02-14').vaultUri]"
@@ -141,7 +192,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('ResourceName'))]",
-        "[resourceId('Microsoft.Web/sites', parameters('ResourceName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('ResourceName'))]",
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', parameters('ResourceName'))]"
       ],
       "properties": {
         "sku": {
@@ -153,6 +205,18 @@
           {
             "tenantId": "[subscription().tenantId]",
             "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('ResourceName')), '2019-08-01', 'Full').identity.principalId]",
+            "permissions": {
+              "keys": [],
+              "secrets": [
+                "Get",
+                "List"
+              ],
+              "certificates": []
+            }
+          },
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('ResourceName')), '2020-11-01', 'Full').identity.principalId]",
             "permissions": {
               "keys": [],
               "secrets": [

@@ -5,6 +5,7 @@
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
     <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
     <Platforms>x64</Platforms>
+    <OutputPath>bin\$(Configuration)</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
